@@ -1,5 +1,11 @@
 // src/App.tsx
 import React, { useMemo, useState } from 'react';
+import OnlineTest from './OnlineTest';
+
+function useQueryParam(name: string) {
+  if (typeof window === 'undefined') return null;
+  return new URLSearchParams(window.location.search).get(name);
+}
 
 export default function App() {
   const [room, setRoom] = useState('amigos');
@@ -25,6 +31,8 @@ export default function App() {
     }
   }
 
+  const showDemo = useQueryParam('demo') === '1';
+
   return (
     <div style={{ padding: 24, background: '#f7fafc', color: '#1a202c', minHeight: '100vh' }}>
       <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 12 }}>
@@ -48,7 +56,9 @@ export default function App() {
           min={2}
           max={6}
           value={players}
-          onChange={(e) => setPlayers(Math.max(2, Math.min(6, Number(e.target.value) || 2)))}
+          onChange={(e) =>
+            setPlayers(Math.max(2, Math.min(6, Number(e.target.value) || 2)))
+          }
           style={{ marginLeft: 8, width: 60, padding: '6px 10px', border: '1px solid #cbd5e0', borderRadius: 8 }}
         />
       </label>
@@ -77,6 +87,19 @@ export default function App() {
       <p style={{ marginTop: 16 }}>
         Abre el enlace de Host y comparte los de Cliente. Todos usarán la sala <b>{room}</b>.
       </p>
+
+      {/* Muestra el demo solo si la URL trae ?demo=1 */}
+      {showDemo && (
+        <>
+          <hr style={{ margin: '24px 0' }} />
+          <p style={{ marginBottom: 8 }}>
+            Demo <code>OnlineTest</code> activo por <b>?demo=1</b>.
+          </p>
+          <div style={{ border: '1px dashed #cbd5e0', borderRadius: 8 }}>
+            <OnlineTest />
+          </div>
+        </>
+      )}
     </div>
   );
 }
