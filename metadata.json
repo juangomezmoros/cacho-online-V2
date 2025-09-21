@@ -1,0 +1,5 @@
+{
+  "name": "Cacho - Juego de Dados",
+  "description": "Una interfaz de usuario para jugar una versión local del juego de dados Cacho. Permite configurar una partida de 2 a 6 jugadores y seguir el flujo básico del juego: lanzar dados, apostar, dudar y determinar un perdedor en cada ronda.",
+  "requestFramePermissions": []
+}
