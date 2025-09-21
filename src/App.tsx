@@ -1,12 +1,10 @@
 // src/App.tsx
 import React, { useMemo, useState } from 'react';
-import OnlineTest from './OnlineTest';
 
 export default function App() {
   const [room, setRoom] = useState('amigos');
   const [players, setPlayers] = useState(2);
 
-  // Usa el dominio actual (sirve en localhost y en Vercel)
   const base = useMemo(
     () => (typeof window !== 'undefined' ? window.location.origin : ''),
     []
@@ -29,7 +27,9 @@ export default function App() {
 
   return (
     <div style={{ padding: 24, background: '#f7fafc', color: '#1a202c', minHeight: '100vh' }}>
-      <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 12 }}>Cacho online — Compartir partida</h1>
+      <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 12 }}>
+        Cacho online — Compartir partida
+      </h1>
 
       <label style={{ display: 'block', marginBottom: 8 }}>
         Nombre de sala:
@@ -77,15 +77,6 @@ export default function App() {
       <p style={{ marginTop: 16 }}>
         Abre el enlace de Host y comparte los de Cliente. Todos usarán la sala <b>{room}</b>.
       </p>
-
-      <hr style={{ margin: '24px 0' }} />
-
-      <p style={{ marginBottom: 8 }}>
-        Debajo queda el demo <code>OnlineTest</code> para probar PING/CANTAR/DUDAR.
-      </p>
-      <div style={{ border: '1px dashed #cbd5e0', borderRadius: 8 }}>
-        <OnlineTest />
-      </div>
     </div>
   );
 }
