@@ -1,5 +1,5 @@
 // src/OnlineTest.tsx
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRoom } from './online/useRoom';
 
 function getParams() {
@@ -8,6 +8,7 @@ function getParams() {
     room: sp.get('room') || 'demo',
     role: (sp.get('role') as 'host' | 'client') || 'host',
     p: sp.get('p') || '0',
+    bots: Math.max(0, Number(sp.get('bots') || '0') || 0), // <- cantidad de bots
   };
 }
 
@@ -23,7 +24,7 @@ function normalize(s: any): GameState {
 }
 
 export default function OnlineTest() {
-  const { room, role, p } = getParams();
+  const { room, role, p, bots } = getParams();
 
   const net = useRoom({
     roomId: room,
@@ -73,10 +74,41 @@ export default function OnlineTest() {
     }
   }
 
+  // ====== BOTS (solo en el HOST) ======
+  const botTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!net.isHost) return;
+    if (bots <= 0) return;
+
+    // Cada 3s un bot “hace algo” (en el demo: PING)
+    const id = window.setInterval(() => {
+      // Elegimos un bot "al azar": players bot tendrán ids 'bot-1', 'bot-2', ...
+      const botId = 'bot-' + (1 + Math.floor(Math.random() * bots));
+      // Simulamos que envía una acción que el host procesa:
+      const s = normalize(net.state);
+      const next = {
+        ...s,
+        counter: s.counter + 1,
+        log: [...s.log, { by: botId, type: 'PING' }],
+      };
+      net.publishState(next);
+    }, 3000);
+
+    botTimer.current = id;
+    return () => {
+      if (botTimer.current) {
+        clearInterval(botTimer.current);
+        botTimer.current = null;
+      }
+    };
+  }, [net.isHost, bots, net.state, net]);
+
+  // ====== UI del demo ======
   return (
     <div style={{ padding: 24, background: '#f7fafc', color: '#1a202c', minHeight: '100vh' }}>
       <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>
-        Room: {room} — Role: {role} — Player: {p}
+        Room: {room} — Role: {role} — Player: {p} {bots > 0 ? `— Bots: ${bots}` : ''}
       </h2>
       <p>Conectado: <b>{String(net.isConnected)}</b></p>
 
@@ -110,7 +142,7 @@ export default function OnlineTest() {
       <div style={{ marginTop: 16 }}>
         <h3 style={{ fontWeight: 700 }}>Log de acciones</h3>
         <ul style={{ marginTop: 8, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 12 }}>
-          {state.log.slice(-10).map((entry, idx) => (
+          {state.log.slice(-12).map((entry, idx) => (
             <li key={idx}>
               <code>{String(entry.by)}:</code> {entry.type} {entry.note ? `→ ${entry.note}` : ''}
             </li>
