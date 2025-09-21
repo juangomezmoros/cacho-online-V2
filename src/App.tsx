@@ -2,12 +2,20 @@
 import React, { useMemo, useState } from 'react';
 import OnlineTest from './OnlineTest';
 
-function useQueryParam(name: string) {
+function getQP(name: string) {
   if (typeof window === 'undefined') return null;
   return new URLSearchParams(window.location.search).get(name);
 }
 
 export default function App() {
+  // Si la URL ya trae room y role -> mostrar directamente el juego
+  const hasRoom = !!getQP('room');
+  const hasRole = !!getQP('role');
+  if (hasRoom && hasRole) {
+    return <OnlineTest />; // pantalla de juego “full”
+  }
+
+  // Si NO trae room/role -> mostrar página para compartir
   const [room, setRoom] = useState('amigos');
   const [players, setPlayers] = useState(2);
 
@@ -30,8 +38,6 @@ export default function App() {
       alert('No se pudo copiar, hazlo manualmente.');
     }
   }
-
-  const showDemo = useQueryParam('demo') === '1';
 
   return (
     <div style={{ padding: 24, background: '#f7fafc', color: '#1a202c', minHeight: '100vh' }}>
@@ -87,19 +93,6 @@ export default function App() {
       <p style={{ marginTop: 16 }}>
         Abre el enlace de Host y comparte los de Cliente. Todos usarán la sala <b>{room}</b>.
       </p>
-
-      {/* Muestra el demo solo si la URL trae ?demo=1 */}
-      {showDemo && (
-        <>
-          <hr style={{ margin: '24px 0' }} />
-          <p style={{ marginBottom: 8 }}>
-            Demo <code>OnlineTest</code> activo por <b>?demo=1</b>.
-          </p>
-          <div style={{ border: '1px dashed #cbd5e0', borderRadius: 8 }}>
-            <OnlineTest />
-          </div>
-        </>
-      )}
     </div>
   );
 }
