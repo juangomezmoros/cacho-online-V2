@@ -1,5 +1,5 @@
 // src/CachoOnline.tsx
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRoom } from './online/useRoom';
 import GameBoard from './components/GameBoard';
 import type { GameState, DiceValue } from './types';
@@ -40,6 +40,20 @@ export default function CachoOnline() {
   const isHost = role === 'host';
 
   // ===== 1) HOOK DEL JUEGO (solo HOST) =====
+  const game = useCachoGameHook() as {
+    state: GameState;
+    setDirection?: (dir: 'RIGHT' | 'LEFT') => void;
+    placeBet?: (q: number, f: DiceValue) => void;
+    doubtBet?: () => void;
+    spotOnBet?: () => void;
+    salpicon?: () => void;
+    // posibles inicializadores (no sabemos el nombre exacto)
+    startGame?: (players: number, bots?: number) => void;
+    newGame?: (players: number, bots?: number) => void;
+    initGame?: (players: number, bots?: number) => void;
+    createGame?: (players: number, bots?: number) => void;
+  };
+
   const {
     state: hostState,
     setDirection,
@@ -47,21 +61,13 @@ export default function CachoOnline() {
     doubtBet,
     spotOnBet,
     salpicon,
-  } = useCachoGameHook() as {
-    state: GameState;
-    setDirection: (dir: 'RIGHT' | 'LEFT') => void;
-    placeBet: (q: number, f: DiceValue) => void;
-    doubtBet: () => void;
-    spotOnBet: () => void;
-    salpicon: () => void;
-  };
+  } = game;
 
   // ===== 2) RED (Firestore) =====
   const net = useRoom({
     roomId: room,
     role,
     playerId: p,
-    // Los clientes arrancan vacío; el host publicará el estado real
     initialState: {} as GameState,
   });
 
@@ -96,17 +102,21 @@ export default function CachoOnline() {
         default:
           break;
       }
-      // El hook actualiza hostState; y el efecto de arriba lo republica cuando esté listo
+      // Cuando el hook actualice, la publicación ocurre arriba si está listo
     });
     return () => unsub();
   }, [isHost, setDirection, placeBet, doubtBet, spotOnBet, salpicon, net]);
 
-  // ===== 5) Elegir estado a renderizar con guardas =====
-  const effectiveStateHost = isHost && isReadyState(hostState) ? hostState : null;
-  const effectiveStateClient = !isHost && isReadyState(net.state) ? (net.state as GameState) : null;
-  const effectiveState = (effectiveStateHost || effectiveStateClient) as GameState | null;
+  // ===== 5) Si el host aún no tiene estado listo, mostrar SETUP RÁPIDO =====
+  if (isHost && !isReadyState(hostState)) {
+    return <HostSetup room={room} game={game} />;
+  }
 
-  // Loader mientras no hay estado listo (especialmente en cliente al entrar)
+  // ===== 6) CLIENTE: espera estado listo =====
+  const effectiveState: GameState | null = isHost
+    ? (isReadyState(hostState) ? hostState : null)
+    : (isReadyState(net.state) ? (net.state as GameState) : null);
+
   if (!effectiveState) {
     return (
       <div style={{ padding: 24, textAlign: 'center' }}>
@@ -120,7 +130,7 @@ export default function CachoOnline() {
     );
   }
 
-  // ===== 6) Handlers que GameBoard necesita =====
+  // ===== 7) Handlers para GameBoard =====
   const handlers = {
     onSetDirection: (direction: 'RIGHT' | 'LEFT') => {
       if (isHost) setDirection?.(direction);
@@ -153,5 +163,88 @@ export default function CachoOnline() {
       onSpotOnBet={handlers.onSpotOnBet}
       onSalpicon={handlers.onSalpicon}
     />
+  );
+}
+
+/** Panel minimal para que el HOST inicie la partida y publique estado */
+function HostSetup({
+  room,
+  game,
+}: {
+  room: string;
+  game: any;
+}) {
+  const [players, setPlayers] = useState(2);
+  const [bots, setBots] = useState(0);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  function tryStart() {
+    setMsg(null);
+    const fns = ['startGame', 'newGame', 'initGame', 'createGame'] as const;
+    const found = fns.find((k) => typeof game?.[k] === 'function');
+    if (!found) {
+      setMsg(
+        "No encontré una función para iniciar (startGame/newGame/initGame/createGame). Si me pasas las primeras líneas de src/hooks/useCachoGame.ts te lo adapto en 1 minuto."
+      );
+      return;
+    }
+    try {
+      // @ts-expect-error dinámico
+      game[found](players, bots);
+      setMsg(`Iniciando con ${players} jugadores (${bots} bots)…`);
+    } catch (e: any) {
+      setMsg(`Error al iniciar: ${e?.message || e}`);
+    }
+  }
+
+  return (
+    <div style={{ padding: 24, maxWidth: 560, margin: '40px auto' }}>
+      <div style={{ marginBottom: 8, fontWeight: 800, fontSize: 18 }}>
+        Sala: “{room}”
+      </div>
+      <div style={{ marginBottom: 12 }}>Configura la partida y pulsa <b>Iniciar</b>.</div>
+
+      <label style={{ display: 'block', margin: '8px 0 4px' }}>Número de jugadores</label>
+      <input
+        type="number"
+        min={2}
+        max={6}
+        value={players}
+        onChange={(e) => setPlayers(parseInt(e.target.value || '2', 10))}
+        style={{ padding: 8, width: 120 }}
+      />
+
+      <label style={{ display: 'block', margin: '12px 0 4px' }}>Bots</label>
+      <input
+        type="number"
+        min={0}
+        max={4}
+        value={bots}
+        onChange={(e) => setBots(parseInt(e.target.value || '0', 10))}
+        style={{ padding: 8, width: 120 }}
+      />
+
+      <div>
+        <button
+          onClick={tryStart}
+          style={{
+            marginTop: 16,
+            padding: '10px 16px',
+            borderRadius: 8,
+            border: '1px solid #888',
+            cursor: 'pointer',
+            fontWeight: 700,
+          }}
+        >
+          Iniciar
+        </button>
+      </div>
+
+      {msg && (
+        <div style={{ marginTop: 12, color: '#444' }}>
+          {msg}
+        </div>
+      )}
+    </div>
   );
 }
