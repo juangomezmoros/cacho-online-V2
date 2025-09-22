@@ -12,10 +12,20 @@ export default function App() {
   const hasRole = !!getQP('role');
 
   if (hasRoom && hasRole) {
-    // <- SOLO tablero real
     return (
       <>
-        <div style={{position:'fixed',top:8,left:8,background:'#ffd',padding:'4px 8px',border:'1px solid #cc0',borderRadius:6, zIndex:9999}}>
+        <div
+          style={{
+            position: 'fixed',
+            top: 8,
+            left: 8,
+            background: '#ffd',
+            padding: '4px 8px',
+            border: '1px solid #cc0',
+            borderRadius: 6,
+            zIndex: 9999,
+          }}
+        >
           APP vREAL
         </div>
         <CachoOnline />
@@ -23,12 +33,11 @@ export default function App() {
     );
   }
 
-  // Home mínima (sin demo)
   return (
     <div style={{ padding: 24 }}>
       <h1>Compartir partida</h1>
-      <p>Ejemplo de links:</p>
-      <code>?room=amigos&role=host&p=0</code>{'  '}o{'  '}
+      <p>Ejemplos:</p>
+      <code>?room=amigos&role=host&p=0</code> {'  '}o{'  '}
       <code>?room=amigos&role=client&p=1</code>
     </div>
   );
