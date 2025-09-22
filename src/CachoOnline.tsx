@@ -4,17 +4,16 @@ import { useRoom } from './online/useRoom';
 import GameBoard from './components/GameBoard';
 import type { GameState, DiceValue } from './types';
 
-// Import tolerante (default o named)
+// Import tolerante: default o named export
 import * as GameHookMod from './hooks/useCachoGame';
 const useCachoGameHook: any =
   (GameHookMod as any).default ?? (GameHookMod as any).useCachoGame;
 if (!useCachoGameHook) {
   throw new Error(
-    "No encontré el hook de juego. Exporta 'export function useCachoGame()' o 'export default function useCachoGame()' en src/hooks/useCachoGame.ts"
+    "No encontré el hook de juego. Expórtalo como 'export function useCachoGame()' o 'export default function useCachoGame()' en src/hooks/useCachoGame.ts"
   );
 }
 
-// Acciones que los clientes envían al host
 type Action =
   | { type: 'SET_DIRECTION'; payload: { direction: 'RIGHT' | 'LEFT' } }
   | { type: 'PLACE_BET'; payload: { quantity: number; face: DiceValue } }
@@ -31,21 +30,16 @@ function getParams() {
   };
 }
 
-// Pequeño validador para no renderizar hasta tener un estado completo
-function isValidState(s: any): s is GameState {
-  return !!(
-    s &&
-    Array.isArray(s.players) &&
-    typeof s.currentPlayerIndex === 'number' &&
-    typeof s.status !== 'undefined'
-  );
+// Estado listo = tiene players[] y status definido
+function isReadyState(s: any): s is GameState {
+  return !!(s && Array.isArray(s.players) && s.players.length > 0 && typeof s.status !== 'undefined');
 }
 
 export default function CachoOnline() {
   const { room, role, p } = useMemo(getParams, []);
   const isHost = role === 'host';
 
-  // HOOK DEL JUEGO (solo Host)
+  // ===== 1) HOOK DEL JUEGO (solo HOST) =====
   const {
     state: hostState,
     setDirection,
@@ -62,22 +56,23 @@ export default function CachoOnline() {
     salpicon: () => void;
   };
 
-  // Red (Firestore)
+  // ===== 2) RED (Firestore) =====
   const net = useRoom({
     roomId: room,
     role,
     playerId: p,
-    initialState: {} as GameState, // el cliente espera al estado del host
+    // Los clientes arrancan vacío; el host publicará el estado real
+    initialState: {} as GameState,
   });
 
-  // HOST publica el estado cada vez que cambie
+  // ===== 3) HOST publica SOLO si el estado está listo =====
   useEffect(() => {
     if (!isHost) return;
-    if (!hostState) return;
+    if (!isReadyState(hostState)) return;
     net.publishState(hostState);
   }, [isHost, hostState, net]);
 
-  // HOST procesa acciones de clientes
+  // ===== 4) HOST procesa acciones de clientes =====
   useEffect(() => {
     if (!isHost) return;
     const unsub = net.subscribeActions((a) => {
@@ -101,14 +96,31 @@ export default function CachoOnline() {
         default:
           break;
       }
-      // El hook actualiza hostState y el efecto de arriba lo publica
+      // El hook actualiza hostState; y el efecto de arriba lo republica cuando esté listo
     });
     return () => unsub();
   }, [isHost, setDirection, placeBet, doubtBet, spotOnBet, salpicon, net]);
 
-  // CLIENTE usa el estado remoto
-  const clientState = (net.state as GameState) || ({} as GameState);
+  // ===== 5) Elegir estado a renderizar con guardas =====
+  const effectiveStateHost = isHost && isReadyState(hostState) ? hostState : null;
+  const effectiveStateClient = !isHost && isReadyState(net.state) ? (net.state as GameState) : null;
+  const effectiveState = (effectiveStateHost || effectiveStateClient) as GameState | null;
 
+  // Loader mientras no hay estado listo (especialmente en cliente al entrar)
+  if (!effectiveState) {
+    return (
+      <div style={{ padding: 24, textAlign: 'center' }}>
+        <div style={{ fontWeight: 700, marginBottom: 8 }}>
+          Conectando a la sala “{room}”…
+        </div>
+        <div style={{ opacity: 0.8 }}>
+          {isHost ? 'Preparando el estado del juego…' : 'Esperando el estado inicial del host…'}
+        </div>
+      </div>
+    );
+  }
+
+  // ===== 6) Handlers que GameBoard necesita =====
   const handlers = {
     onSetDirection: (direction: 'RIGHT' | 'LEFT') => {
       if (isHost) setDirection?.(direction);
@@ -121,4 +133,25 @@ export default function CachoOnline() {
     onDoubtBet: () => {
       if (isHost) doubtBet?.();
       else net.sendAction({ type: 'DOUBT' });
-   
+    },
+    onSpotOnBet: () => {
+      if (isHost) spotOnBet?.();
+      else net.sendAction({ type: 'SPOT_ON' });
+    },
+    onSalpicon: () => {
+      if (isHost) salpicon?.();
+      else net.sendAction({ type: 'SALPICON' });
+    },
+  };
+
+  return (
+    <GameBoard
+      gameState={effectiveState}
+      onSetDirection={handlers.onSetDirection}
+      onPlaceBet={handlers.onPlaceBet}
+      onDoubtBet={handlers.onDoubtBet}
+      onSpotOnBet={handlers.onSpotOnBet}
+      onSalpicon={handlers.onSalpicon}
+    />
+  );
+}
