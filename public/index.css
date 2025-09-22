@@ -44,3 +44,25 @@ body {
     transform: scale(.80);
   }
 }
+/* Inputs legibles sobre fondo oscuro */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="search"] {
+  color: #eef2ff;               /* texto claro */
+  background: #0f1e2e;          /* fondo oscuro */
+  border: 1px solid #3b556e;    /* borde sutil */
+  border-radius: 10px;
+  padding: 10px 12px;
+  outline: none;
+}
+
+input::placeholder {
+  color: #a7b6c8;               /* placeholder visible */
+  opacity: 0.8;
+}
+
+input:focus {
+  border-color: #76b3ff;        /* borde al enfocarse */
+  box-shadow: 0 0 0 3px rgba(118,179,255,.2);
+}
