@@ -145,7 +145,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState, onSetDirection, onPlac
   };
 
   return (
-    <div className="relative w-full h-full max-w-7xl max-h-[1024px] bg-green-800 rounded-full border-8 border-yellow-700 shadow-2xl p-8 text-white">
+    <div className="relative w-full h-full bg-green-800 rounded-[40px] border-8 border-yellow-700 shadow-2xl p-8 text-white"
+     style={{ borderColor: '#a86e00' }}>
+
       {/* Total Dice Indicator */}
       <div className="absolute top-6 left-6 bg-green-900/50 p-2 rounded-lg text-center shadow-lg">
           <div className="text-xs font-bold uppercase tracking-wider text-yellow-400">Dados en Juego</div>

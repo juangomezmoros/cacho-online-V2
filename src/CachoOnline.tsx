@@ -4,7 +4,7 @@ import { useRoom } from './online/useRoom';
 import GameBoard from './components/GameBoard';
 import type { GameState, DiceValue } from './types';
 
-// Import tolerante: default o named export
+// ⬇️ Import tolerante: sirve si exportaste default o named
 import * as GameHookMod from './hooks/useCachoGame';
 const useCachoGameHook: any =
   (GameHookMod as any).default ?? (GameHookMod as any).useCachoGame;
