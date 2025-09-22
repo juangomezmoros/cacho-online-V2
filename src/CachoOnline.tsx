@@ -158,9 +158,9 @@ export default function CachoOnline() {
   }, [isHost, setDirection, placeBet, doubtBet, spotOnBet, salpicon, net]);
 
   // 5) Modo seguro: forzar panel de setup sin tocar estado del juego
-  if (isHost && setup) {
-    return <HostSetup room={room} game={game} />;
-  }
+ if (isHost && !isReadyState(hostState)) {
+  return <HostSetup room={room} game={game} />;
+}
 
   // 6) Seleccionar estado y sanitizar antes de renderizar tablero
   const rawEffective: GameState | null = isHost
