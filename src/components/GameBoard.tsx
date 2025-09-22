@@ -145,8 +145,11 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState, onSetDirection, onPlac
   };
 
   return (
-    <div className="relative w-full h-full bg-green-800 rounded-[40px] border-8 border-yellow-700 shadow-2xl p-8 text-white"
-     style={{ borderColor: '#a86e00' }}>
+    <div
+  className="relative w-full h-full bg-green-800 rounded-[40px] border-8 p-8 text-white board-shadow overflow-hidden"
+  style={{ borderColor: '#a86e00' }}
+>
+
 
       {/* Total Dice Indicator */}
       <div className="absolute top-6 left-6 bg-green-900/50 p-2 rounded-lg text-center shadow-lg">
@@ -178,8 +181,14 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState, onSetDirection, onPlac
           />
         );
       })}
+      	<div
+  	   className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+             flex flex-col items-center justify-center text-center
+             p-6 bg-green-900/50 rounded-xl min-h-[140px]
+             w-[680px] max-w-[92%] z-10"
+	>
+
       
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center text-center p-6 bg-green-900/50 rounded-lg min-h-[150px] w-1/2">
         {(status === GameStatus.InProgress || status === GameStatus.Reveal) && players.length > 2 && (
             <div className="absolute top-2 right-2 text-gray-400 text-sm flex items-center gap-1">
                 <span>Dirección:</span>

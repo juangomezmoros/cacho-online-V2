@@ -13,3 +13,34 @@ body {
   color: #eef2ff;         /* texto claro */
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif;
 }
+/* === Shell util === */
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+/* Evita que nada se “salga” visualmente y permite sombras suaves */
+.board-shadow {
+  box-shadow: 0 40px 80px rgba(0,0,0,.35);
+}
+
+/* Si la pantalla es bajita, bajamos el tamaño del tablero para que quepa */
+@media (max-height: 700px) {
+  .board-scale {
+    transform: scale(.92);
+    transform-origin: center;
+  }
+}
+@media (max-height: 620px) {
+  .board-scale {
+    transform: scale(.86);
+  }
+}
+@media (max-height: 560px) {
+  .board-scale {
+    transform: scale(.80);
+  }
+}
