@@ -12,22 +12,28 @@ export default function App() {
   const hasRoom = !!getQP('room');
   const hasRole = !!getQP('role');
   if (hasRoom && hasRole) {
-    return <OnlineTest />; // pantalla de juego “full”
+    return <OnlineTest />; // pantalla de juego “full” (por ahora el demo)
   }
 
-  // Si NO trae room/role -> mostrar página para compartir
+  // Pantalla para compartir (cuando NO hay room/role)
   const [room, setRoom] = useState('amigos');
   const [players, setPlayers] = useState(2);
+  const [bots, setBots] = useState(0);
 
   const base = useMemo(
     () => (typeof window !== 'undefined' ? window.location.origin : ''),
     []
   );
 
-  const hostUrl = `${base}/?room=${encodeURIComponent(room)}&role=host&p=0`;
+  const hostUrl = `${base}/?room=${encodeURIComponent(room)}&role=host&p=0${
+    bots > 0 ? `&bots=${bots}` : ''
+  }`;
+
   const clientUrls = Array.from({ length: Math.max(0, players - 1) }).map((_, i) => {
     const p = i + 1;
-    return `${base}/?room=${encodeURIComponent(room)}&role=client&p=${p}`;
+    return `${base}/?room=${encodeURIComponent(room)}&role=client&p=${p}${
+      bots > 0 ? `&bots=${bots}` : ''
+    }`;
   });
 
   async function copy(text: string) {
@@ -55,19 +61,35 @@ export default function App() {
         />
       </label>
 
-      <label style={{ display: 'block', marginBottom: 8 }}>
-        Cantidad de jugadores:
-        <input
-          type="number"
-          min={2}
-          max={6}
-          value={players}
-          onChange={(e) =>
-            setPlayers(Math.max(2, Math.min(6, Number(e.target.value) || 2)))
-          }
-          style={{ marginLeft: 8, width: 60, padding: '6px 10px', border: '1px solid #cbd5e0', borderRadius: 8 }}
-        />
-      </label>
+      <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+        <label>
+          Jugadores:
+          <input
+            type="number"
+            min={2}
+            max={6}
+            value={players}
+            onChange={(e) =>
+              setPlayers(Math.max(2, Math.min(6, Number(e.target.value) || 2)))
+            }
+            style={{ marginLeft: 8, width: 64, padding: '6px 10px', border: '1px solid #cbd5e0', borderRadius: 8 }}
+          />
+        </label>
+
+        <label>
+          Bots:
+          <input
+            type="number"
+            min={0}
+            max={4}
+            value={bots}
+            onChange={(e) =>
+              setBots(Math.max(0, Math.min(4, Number(e.target.value) || 0)))
+            }
+            style={{ marginLeft: 8, width: 64, padding: '6px 10px', border: '1px solid #cbd5e0', borderRadius: 8 }}
+          />
+        </label>
+      </div>
 
       <div style={{ marginTop: 16, padding: 12, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8 }}>
         <h3 style={{ marginBottom: 8, fontWeight: 700 }}>Enlace Host</h3>
@@ -91,7 +113,8 @@ export default function App() {
       </div>
 
       <p style={{ marginTop: 16 }}>
-        Abre el enlace de Host y comparte los de Cliente. Todos usarán la sala <b>{room}</b>.
+        Abre el enlace de Host y comparte los de Cliente. Todos usarán la sala <b>{room}</b>{' '}
+        {bots > 0 ? `(con ${bots} bot${bots === 1 ? '' : 's'})` : ''}.
       </p>
     </div>
   );
