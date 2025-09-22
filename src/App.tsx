@@ -1,6 +1,6 @@
 // src/App.tsx
 import React, { useMemo, useState } from 'react';
-import OnlineTest from './OnlineTest';
+import CachoOnline from './CachoOnline';
 
 function getQP(name: string) {
   if (typeof window === 'undefined') return null;
@@ -8,14 +8,14 @@ function getQP(name: string) {
 }
 
 export default function App() {
-  // Si la URL ya trae room y role -> mostrar directamente el juego
   const hasRoom = !!getQP('room');
   const hasRole = !!getQP('role');
   if (hasRoom && hasRole) {
-    return <OnlineTest />; // pantalla de juego “full” (por ahora el demo)
+    // ⬇️ ahora entra directo al tablero REAL
+    return <CachoOnline />;
   }
 
-  // Pantalla para compartir (cuando NO hay room/role)
+  // Pantalla para compartir (igual que antes, con selector de bots)
   const [room, setRoom] = useState('amigos');
   const [players, setPlayers] = useState(2);
   const [bots, setBots] = useState(0);
@@ -105,7 +105,7 @@ export default function App() {
           <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
             <span>Cliente {idx + 1}:</span>
             <a href={u} target="_blank" rel="noreferrer">{u}</a>
-            <button onClick={() => copy(u)} style={{ padding: '6px 10px', border: '1px solid #2d3748', borderRadius: 8 }}>
+            <button onClick={() => copy(u)} style={{ padding: '6px 10px', border: '1px solid '#2d3748', borderRadius: 8 }}>
               Copiar
             </button>
           </div>
@@ -113,8 +113,8 @@ export default function App() {
       </div>
 
       <p style={{ marginTop: 16 }}>
-        Abre el enlace de Host y comparte los de Cliente. Todos usarán la sala <b>{room}</b>{' '}
-        {bots > 0 ? `(con ${bots} bot${bots === 1 ? '' : 's'})` : ''}.
+        Abre el enlace de Host y comparte los de Cliente. Todos usarán la sala <b>{room}</b>
+        {bots > 0 ? ` (con ${bots} bot${bots === 1 ? '' : 's'})` : ''}.
       </p>
     </div>
   );
